@@ -2,14 +2,25 @@
 <html lang="ja">
     <head>
         <meta charset="utf-8">
-        <title>演習課題4：自動販売機（クラス）</title>
+        <title>演習課題4：自動販売機（所持金と在庫管理）</title>
     </head>
     <body>
         <h1 id="vending-machine">自動販売機システム</h1>
-        <table id="item_area" border="1"></table>
+        <p>所持金: <span id="wallet">1000</span>円</p>
+        <table id="item_area" border="1">
+            <tr>
+                <th>商品名</th>
+                <th>金額</th>
+                <th>在庫数</th>
+                <th>購入</th>
+            </tr>
+        </table>
         <script>
-            // 商品一覧を記録する連想配列の配列
-            const items =  [
+            // 所持金の変数を定義
+            let wallet = 1000; // 初期所持金を1000円に設定
+
+            // 商品一覧の配列
+            const items = [
                 { id: 1, name: "緑茶", price: 140, stock: 5 },
                 { id: 2, name: "水", price: 100, stock: 14 },
                 { id: 3, name: "オレンジジュース", price: 150, stock: 7 },
@@ -20,60 +31,52 @@
                 { id: 8, name: "紅茶", price: 140, stock: 6 }
             ];
 
-            // 商品用のクラス定義
+            // 商品用クラス定義
             class Item {
-                static number = 1;
-                constructor(name, price, stock) {
-                    this.id = Item.number;
+                constructor(id, name, price, stock) {
+                    this.id = id;
                     this.name = name;
                     this.price = price;
                     this.stock = stock;
-                    Item.number++;
-                }
-
-                // 商品一覧の表示関数
-                static showItemList(list) {
-                    console.log("商品は以下の" + Item.number + "種類です。");
-                    list.forEach(item => {
-                        console.log(`id: ${item.id}, name: ${item.name}, ${item.price}円, 残り${item.stock}個`);
-                    });
-                    console.log(""); // 空行の出力
                 }
 
                 // 商品購入の関数
-                buyItem() {          
-                    if (this.stock > 0) { 
-                        console.log(`商品番号: ${this.id}, 商品名: ${this.name}を購入します。`);
-                        this.stock--;
-                        console.log(`残りは${this.stock}個です。`);
-                        document.getElementById(`stock${this.id}`).textContent = this.stock;
+                buyItem() {
+                    if (wallet >= this.price && this.stock > 0) {
+                        wallet -= this.price; // 所持金を減らす
+                        this.stock--; // 在庫を減らす
+                        console.log(`${this.name}を購入しました。残金は${wallet}円です。`);
+                        document.getElementById("wallet").textContent = wallet; // 残金を更新
+                        document.getElementById(`stock${this.id}`).textContent = this.stock; // 在庫を更新
+                    } else if (wallet < this.price) {
+                        console.log(`所持金が不足しています。${this.name}を購入できません。`);
+                    } else {
+                        console.log(`${this.name}は商品の在庫がないため購入できません。`);
                     }
                 }
-            } // End of Item class
-
-            // 商品テーブルのエレメント抽出
-            const itemArea = document.getElementById("item_area");
-            itemArea.innerHTML += "<tr><th>商品名</th><th>金額</th><th>在庫数</th><th>購入</th></tr>";
-
-            // 配列のオブジェクト作成
-            const item_list = new Array(items.length);
-
-            // 商品オブジェクトの生成
-            for (let i = 0; i < items.length; i++) {
-                item_list[i] = new Item(items[i].name, items[i].price, items[i].stock);
             }
 
             // 商品表の作成
-            for (let i = 0; i < item_list.length; i++) {
-                itemArea.innerHTML += `<tr>
-                    <td>${item_list[i].name}</td>
-                    <td>${item_list[i].price}円</td>
-                    <td id="stock${item_list[i].id}">${item_list[i].stock}</td>
-                    <td><button id="button${item_list[i].id}">購入</button></td>
-                </tr>`;
-            }
-            // 商品一覧の表示
-            Item.showItemList(item_list);
+            const itemArea = document.getElementById("item_area");
+            const item_list = items.map(item => new Item(item.id, item.name, item.price, item.stock));
+
+            item_list.forEach(item => {
+                itemArea.innerHTML += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>${item.price}円</td>
+                        <td id="stock${item.id}">${item.stock}</td>
+                        <td><button id="button${item.id}">購入</button></td>
+                    </tr>
+                `;
+            });
+
+            // クリックイベントの設定（購入処理）
+            item_list.forEach(item => {
+                document.getElementById(`button${item.id}`).onclick = () => {
+                    item.buyItem();
+                };
+            });
 
         </script>
     </body>
